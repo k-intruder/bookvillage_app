@@ -6,7 +6,8 @@ import { checkoutSchema, returnSchema } from '@/lib/validations/books'
 import { getCurrentUser } from '@/app/actions/auth'
 import { phoneToEmail, pinToPassword } from '@/lib/validations/auth'
 import { getKSTNow, getKSTDateString, getKSTDateAfterDays } from '@/lib/date'
-import { awardJellyForCheckout, awardJellyForReturn, awardJellyForCancel } from '@/app/actions/jelly'
+import { awardJellyForCheckout, awardJellyForReturn, awardJellyForCancel } from '@/lib/jelly'
+import { isApprovedAdmin } from '@/lib/authorization'
 import type { ActionResult } from '@/types'
 
 async function getSettingValue(supabase: Awaited<ReturnType<typeof createClient>>, key: string, defaultValue: number): Promise<number> {
@@ -37,7 +38,7 @@ interface ReturnResult {
 
 export async function checkoutBook(formData: FormData): Promise<ActionResult<CheckoutResult>> {
   const admin = await getCurrentUser()
-  if (!admin || admin.role !== 'admin') {
+  if (!isApprovedAdmin(admin)) {
     return { success: false, error: '권한이 없습니다.' }
   }
 
@@ -142,7 +143,7 @@ export async function checkoutBook(formData: FormData): Promise<ActionResult<Che
 // 비회원(게스트) 대출: 이름·동호수·전화번호로 게스트 프로필 확보 후 대출
 export async function checkoutBookGuest(formData: FormData): Promise<ActionResult<CheckoutResult>> {
   const admin = await getCurrentUser()
-  if (!admin || admin.role !== 'admin') {
+  if (!isApprovedAdmin(admin)) {
     return { success: false, error: '권한이 없습니다.' }
   }
 
@@ -266,7 +267,7 @@ export async function checkoutBookGuest(formData: FormData): Promise<ActionResul
 
 export async function returnBook(formData: FormData): Promise<ActionResult<ReturnResult>> {
   const admin = await getCurrentUser()
-  if (!admin || admin.role !== 'admin') {
+  if (!isApprovedAdmin(admin)) {
     return { success: false, error: '권한이 없습니다.' }
   }
 
@@ -348,7 +349,7 @@ export async function getReturnedRentals(params?: {
   pageSize?: number
 }) {
   const user = await getCurrentUser()
-  if (!user || user.role !== 'admin') return { rows: [], totalCount: 0, page: 1, totalPages: 0 }
+  if (!isApprovedAdmin(user)) return { rows: [], totalCount: 0, page: 1, totalPages: 0 }
 
   const page = params?.page ?? 1
   const pageSize = params?.pageSize ?? 20
@@ -438,7 +439,7 @@ export async function getRentalsByPeriod(params?: {
   pageSize?: number
 }) {
   const user = await getCurrentUser()
-  if (!user || user.role !== 'admin') {
+  if (!isApprovedAdmin(user)) {
     return { rows: [], totalCount: 0, page: 1, totalPages: 0, activeCount: 0, returnedCount: 0, uniqueUsers: 0 }
   }
 
@@ -716,7 +717,7 @@ export async function getActiveRentals(params?: {
   query?: string // 대여자 이름 또는 도서명/바코드
 }) {
   const admin = await getCurrentUser()
-  if (!admin || admin.role !== 'admin') return []
+  if (!isApprovedAdmin(admin)) return []
 
   let q = supabaseAdmin
     .from('rentals')
@@ -768,7 +769,7 @@ export async function getActiveRentals(params?: {
 // 게스트 대출 정보 수정 (대출일/이용자 정보). 게스트만 수정 가능.
 export async function updateGuestRental(formData: FormData): Promise<ActionResult> {
   const admin = await getCurrentUser()
-  if (!admin || admin.role !== 'admin') {
+  if (!isApprovedAdmin(admin)) {
     return { success: false, error: '권한이 없습니다.' }
   }
 
@@ -837,7 +838,7 @@ export async function updateGuestRental(formData: FormData): Promise<ActionResul
 
 export async function getBookRentals(bookId: string) {
   const admin = await getCurrentUser()
-  if (!admin || admin.role !== 'admin') return []
+  if (!isApprovedAdmin(admin)) return []
 
   const supabase = await createClient()
   const { data } = await supabase
@@ -935,7 +936,7 @@ export async function markNotificationsRead() {
 // 연체 알림 발송 (앱 내 기록)
 export async function sendOverdueNotification(rentalId: string, type: '7day' | '30day'): Promise<ActionResult> {
   const admin = await getCurrentUser()
-  if (!admin || admin.role !== 'admin') return { success: false, error: '권한이 없습니다.' }
+  if (!isApprovedAdmin(admin)) return { success: false, error: '권한이 없습니다.' }
 
   // 이미 발송했는지 확인
   const { data: existing } = await supabaseAdmin
@@ -1034,7 +1035,7 @@ export async function selfCheckout(barcode: string): Promise<ActionResult<{ book
 
 export async function getAllResidents() {
   const admin = await getCurrentUser()
-  if (!admin || admin.role !== 'admin') return []
+  if (!isApprovedAdmin(admin)) return []
 
   const { data } = await supabaseAdmin
     .from('profiles')
@@ -1047,7 +1048,7 @@ export async function getAllResidents() {
 
 export async function searchResidents(query: string) {
   const admin = await getCurrentUser()
-  if (!admin || admin.role !== 'admin') {
+  if (!isApprovedAdmin(admin)) {
     return { success: false as const, error: '권한이 없습니다.' }
   }
 
@@ -1067,7 +1068,7 @@ export async function searchResidents(query: string) {
 
 export async function getResidentDetail(userId: string) {
   const admin = await getCurrentUser()
-  if (!admin || admin.role !== 'admin') return null
+  if (!isApprovedAdmin(admin)) return null
 
   const [profileRes, activeRes, pastRes] = await Promise.all([
     supabaseAdmin

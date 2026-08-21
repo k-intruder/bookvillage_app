@@ -1,5 +1,18 @@
 import { createClient } from '@supabase/supabase-js'
 import { NextResponse } from 'next/server'
+import { timingSafeEqual } from 'node:crypto'
+
+function hasValidSetupSecret(request: Request, expectedSecret: string) {
+  const authorization = request.headers.get('authorization')
+  const providedSecret = authorization?.startsWith('Bearer ')
+    ? authorization.slice('Bearer '.length)
+    : ''
+
+  const expected = Buffer.from(expectedSecret)
+  const provided = Buffer.from(providedSecret)
+
+  return expected.length === provided.length && timingSafeEqual(expected, provided)
+}
 
 /**
  * POST /api/setup
@@ -12,12 +25,17 @@ import { NextResponse } from 'next/server'
 export async function POST(request: Request) {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+  const setupSecret = process.env.SETUP_SECRET
 
-  if (!supabaseUrl || !serviceRoleKey) {
+  if (!supabaseUrl || !serviceRoleKey || !setupSecret) {
     return NextResponse.json(
-      { error: '환경변수가 설정되지 않았습니다.' },
-      { status: 500 }
+      { error: '초기 설정 기능이 비활성화되어 있습니다.' },
+      { status: 503 }
     )
+  }
+
+  if (!hasValidSetupSecret(request, setupSecret)) {
+    return NextResponse.json({ error: '권한이 없습니다.' }, { status: 401 })
   }
 
   const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey, {
@@ -49,13 +67,27 @@ export async function POST(request: Request) {
     )
   }
 
-  const username = body.username || 'admin'
-  const password = body.password || '123456'
-  const name = body.name || '관리자'
+  const username = body.username?.trim()
+  const password = body.password
+  const name = body.name?.trim()
 
-  if (password.length < 6) {
+  if (!username || !password || !name) {
     return NextResponse.json(
-      { error: '비밀번호는 6자 이상이어야 합니다.' },
+      { error: 'username, password, name은 모두 필수입니다.' },
+      { status: 400 }
+    )
+  }
+
+  if (!/^[a-zA-Z0-9_-]{3,50}$/.test(username)) {
+    return NextResponse.json(
+      { error: '아이디는 영문, 숫자, 밑줄, 하이픈을 사용해 3~50자로 입력해주세요.' },
+      { status: 400 }
+    )
+  }
+
+  if (password.length < 12) {
+    return NextResponse.json(
+      { error: '초기 관리자 비밀번호는 12자 이상이어야 합니다.' },
       { status: 400 }
     )
   }

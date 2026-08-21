@@ -3,59 +3,9 @@
 import { createClient } from '@/lib/supabase/server'
 import { supabaseAdmin } from '@/lib/supabase/admin'
 import { getCurrentUser } from '@/app/actions/auth'
+import { changeJellyByAdmin } from '@/lib/jelly'
+import { isApprovedAdmin } from '@/lib/authorization'
 import type { ActionResult } from '@/types'
-
-async function getJellySettingValue(key: string, defaultValue: number): Promise<number> {
-  const { data } = await supabaseAdmin
-    .from('library_settings')
-    .select('value')
-    .eq('key', key)
-    .single()
-  return data ? parseInt(data.value, 10) || defaultValue : defaultValue
-}
-
-export async function awardJelly(
-  userId: string,
-  amount: number,
-  reason: string,
-  description?: string,
-  bookId?: string
-) {
-  // jelly_balances UPSERT
-  const { data: existing } = await supabaseAdmin
-    .from('jelly_balances')
-    .select('balance, total_earned')
-    .eq('user_id', userId)
-    .single()
-
-  if (existing) {
-    const newBalance = existing.balance + amount
-    const newTotalEarned = amount > 0 ? existing.total_earned + amount : existing.total_earned
-    await supabaseAdmin
-      .from('jelly_balances')
-      .update({ balance: newBalance, total_earned: newTotalEarned, updated_at: new Date().toISOString() })
-      .eq('user_id', userId)
-  } else {
-    await supabaseAdmin
-      .from('jelly_balances')
-      .insert({
-        user_id: userId,
-        balance: Math.max(0, amount),
-        total_earned: amount > 0 ? amount : 0,
-      })
-  }
-
-  // jelly_history INSERT
-  await supabaseAdmin
-    .from('jelly_history')
-    .insert({
-      user_id: userId,
-      amount,
-      reason,
-      description: description ?? null,
-      book_id: bookId ?? null,
-    })
-}
 
 export async function getMyJelly() {
   const supabase = await createClient()
@@ -109,10 +59,9 @@ export async function getMyJellyHistory(limit = 30) {
     created_at: h.created_at,
   }))
 }
-
 export async function getJellyRanking(limit = 10) {
   const user = await getCurrentUser()
-  if (!user || user.role !== 'admin') return []
+  if (!isApprovedAdmin(user)) return []
 
   const { data } = await supabaseAdmin
     .from('jelly_balances')
@@ -138,10 +87,9 @@ export async function getJellyRanking(limit = 10) {
     total_earned: d.total_earned,
   }))
 }
-
 export async function getJellyRankingByPeriod(startDate: string, endDate: string, limit = 50) {
   const user = await getCurrentUser()
-  if (!user || user.role !== 'admin') return []
+  if (!isApprovedAdmin(user)) return []
 
   const { data } = await supabaseAdmin
     .from('jelly_history')
@@ -179,17 +127,17 @@ export async function getJellyRankingByPeriod(startDate: string, endDate: string
 
 export async function adminGiveJelly(userId: string, amount: number, description: string): Promise<ActionResult> {
   const user = await getCurrentUser()
-  if (!user || user.role !== 'admin') return { success: false, error: '권한이 없습니다.' }
+  if (!isApprovedAdmin(user)) return { success: false, error: '권한이 없습니다.' }
 
   if (amount <= 0) return { success: false, error: '지급 수량은 1 이상이어야 합니다.' }
 
-  await awardJelly(userId, amount, 'admin_give', description)
+  await changeJellyByAdmin(userId, amount, 'admin_give', description)
   return { success: true }
 }
 
 export async function adminDeductJelly(userId: string, amount: number, description: string): Promise<ActionResult> {
   const user = await getCurrentUser()
-  if (!user || user.role !== 'admin') return { success: false, error: '권한이 없습니다.' }
+  if (!isApprovedAdmin(user)) return { success: false, error: '권한이 없습니다.' }
 
   if (amount <= 0) return { success: false, error: '차감 수량은 1 이상이어야 합니다.' }
 
@@ -204,13 +152,13 @@ export async function adminDeductJelly(userId: string, amount: number, descripti
     return { success: false, error: '잔액이 부족합니다.' }
   }
 
-  await awardJelly(userId, -amount, 'admin_deduct', description)
+  await changeJellyByAdmin(userId, -amount, 'admin_deduct', description)
   return { success: true }
 }
 
 export async function getUserJellyHistory(userId: string, limit = 30) {
   const user = await getCurrentUser()
-  if (!user || user.role !== 'admin') return []
+  if (!isApprovedAdmin(user)) return []
 
   const { data } = await supabaseAdmin
     .from('jelly_history')
@@ -243,38 +191,4 @@ export async function getUserJellyHistory(userId: string, limit = 30) {
     book_title: h.book_id ? bookMap[h.book_id] ?? null : null,
     created_at: h.created_at,
   }))
-}
-
-// 설정값 기반 젤리 지급 헬퍼
-export async function awardJellyForCheckout(userId: string, bookTitle: string, bookId: string) {
-  const amount = await getJellySettingValue('jelly_checkout', 5)
-  if (amount > 0) await awardJelly(userId, amount, 'checkout', bookTitle, bookId)
-}
-
-export async function awardJellyForReturn(userId: string, bookTitle: string, bookId: string) {
-  const amount = await getJellySettingValue('jelly_return', 5)
-  if (amount > 0) await awardJelly(userId, amount, 'return', bookTitle, bookId)
-}
-
-// 대여 취소 시 대출 젤리 회수 (지급 시와 동일 금액 차감, 잔액 0 미만 방지)
-export async function awardJellyForCancel(userId: string, bookTitle: string, bookId: string) {
-  const amount = await getJellySettingValue('jelly_checkout', 5)
-  if (amount <= 0) return
-  const { data: balance } = await supabaseAdmin
-    .from('jelly_balances')
-    .select('balance')
-    .eq('user_id', userId)
-    .single()
-  const deduct = Math.min(amount, balance?.balance ?? 0)
-  if (deduct > 0) await awardJelly(userId, -deduct, 'checkout_cancel', bookTitle, bookId)
-}
-
-export async function awardJellyForReport(userId: string, bookTitle: string, bookId: string) {
-  const amount = await getJellySettingValue('jelly_report', 10)
-  if (amount > 0) await awardJelly(userId, amount, 'report', bookTitle, bookId)
-}
-
-export async function awardJellyForQuiz(userId: string, bookTitle: string, bookId: string) {
-  const amount = await getJellySettingValue('jelly_quiz', 3)
-  if (amount > 0) await awardJelly(userId, amount, 'quiz', bookTitle, bookId)
 }

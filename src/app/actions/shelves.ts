@@ -2,6 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { getCurrentUser } from './auth'
+import { isApprovedAdmin } from '@/lib/authorization'
 import type { ActionResult } from '@/types'
 import { z } from 'zod'
 
@@ -48,7 +49,7 @@ export async function getShelves() {
 
 export async function createShelf(formData: FormData): Promise<ActionResult> {
   const user = await getCurrentUser()
-  if (!user || user.role !== 'admin') {
+  if (!isApprovedAdmin(user)) {
     return { success: false, error: '관리자 권한이 필요합니다.' }
   }
 
@@ -84,7 +85,7 @@ export async function createShelf(formData: FormData): Promise<ActionResult> {
 
 export async function updateShelf(formData: FormData): Promise<ActionResult> {
   const user = await getCurrentUser()
-  if (!user || user.role !== 'admin') {
+  if (!isApprovedAdmin(user)) {
     return { success: false, error: '관리자 권한이 필요합니다.' }
   }
 
@@ -146,7 +147,7 @@ export async function updateShelf(formData: FormData): Promise<ActionResult> {
 
 export async function deleteShelf(id: string): Promise<ActionResult> {
   const user = await getCurrentUser()
-  if (!user || user.role !== 'admin') {
+  if (!isApprovedAdmin(user)) {
     return { success: false, error: '관리자 권한이 필요합니다.' }
   }
 

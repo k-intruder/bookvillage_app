@@ -117,7 +117,7 @@ bookvillage/
 │   └── middleware.ts                     # Next.js 미들웨어 진입점
 │
 ├── supabase/
-│   └── migrations/                       # 00001 ~ 00014
+│   └── migrations/                       # 순차 적용 SQL 마이그레이션
 │
 ├── .vercel-prod/                         # Production Vercel 설정
 ├── .vercel-dev/                          # Dev Vercel 설정
@@ -141,7 +141,7 @@ bookvillage/
 
 ### 상태 관리 전략
 
-- **서버 상태**: `useTransition` + Server Actions로 데이터 페칭. React Query 미사용.
+- **서버 상태**: Server Components와 Server Actions를 기본으로 사용하며, 주민용 클라이언트 화면은 React Query로 캐시·재조회 상태를 관리.
 - **URL 상태**: 검색어, 필터, 페이지네이션은 URL searchParams 관리
 - **폼 상태**: `useState` + `useTransition`으로 로딩/에러 상태 관리
 - **UI 상태**: `useState`로 모달, 탭, 토스트 등 관리

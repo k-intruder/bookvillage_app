@@ -3,6 +3,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { supabaseAdmin } from '@/lib/supabase/admin'
 import { getCurrentUser } from './auth'
+import { isApprovedAdmin } from '@/lib/authorization'
 import type { ActionResult } from '@/types'
 
 export async function getLibrarySettings() {
@@ -34,7 +35,7 @@ export async function getPublicSettings() {
 
 export async function updateLibrarySetting(key: string, value: string): Promise<ActionResult> {
   const user = await getCurrentUser()
-  if (!user || user.role !== 'admin') {
+  if (!isApprovedAdmin(user)) {
     return { success: false, error: '관리자 권한이 필요합니다.' }
   }
 
@@ -57,7 +58,7 @@ export async function updateLibrarySetting(key: string, value: string): Promise<
 
 export async function uploadLogo(formData: FormData): Promise<ActionResult & { url?: string }> {
   const user = await getCurrentUser()
-  if (!user || user.role !== 'admin') {
+  if (!isApprovedAdmin(user)) {
     return { success: false, error: '관리자 권한이 필요합니다.' }
   }
 
@@ -97,7 +98,7 @@ export async function uploadLogo(formData: FormData): Promise<ActionResult & { u
 
 export async function uploadOgImage(formData: FormData): Promise<ActionResult & { url?: string }> {
   const user = await getCurrentUser()
-  if (!user || user.role !== 'admin') {
+  if (!isApprovedAdmin(user)) {
     return { success: false, error: '관리자 권한이 필요합니다.' }
   }
 

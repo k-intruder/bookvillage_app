@@ -75,6 +75,7 @@ cp .env.example .env.local
 NEXT_PUBLIC_SUPABASE_URL=https://your-project-ref.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
 SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
+SETUP_SECRET=충분히-긴-무작위-초기화-토큰
 
 # 카카오 API (3단계에서 복사한 값)
 KAKAO_REST_API_KEY=your-kakao-rest-api-key
@@ -90,6 +91,7 @@ NEXT_PUBLIC_APP_URL=http://localhost:6100
 | `NEXT_PUBLIC_SUPABASE_URL` | Supabase 프로젝트 URL | O |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase 공개 키 (클라이언트 사용) | O |
 | `SUPABASE_SERVICE_ROLE_KEY` | Supabase 서비스 역할 키 (서버 전용) | O |
+| `SETUP_SECRET` | 최초 관리자 생성 API 인증용 무작위 토큰 | O |
 | `KAKAO_REST_API_KEY` | 카카오 REST API 키 | O |
 | `NEXT_PUBLIC_APP_URL` | 앱 기본 URL | O |
 
@@ -175,14 +177,16 @@ curl http://localhost:6100/api/health
 
 ## 7단계: 첫 관리자 계정 생성
 
-책빌리지는 초기 설정 API를 제공합니다. 관리자가 한 명도 없을 때만 동작합니다.
+책빌리지는 초기 설정 API를 제공합니다. 관리자가 한 명도 없을 때만 동작하며,
+요청에는 환경변수 `SETUP_SECRET`과 동일한 Bearer 토큰이 필요합니다.
 
 ### 방법 1: Setup API (권장)
 
 ```bash
 curl -X POST http://localhost:6100/api/setup \
+  -H "Authorization: Bearer $SETUP_SECRET" \
   -H "Content-Type: application/json" \
-  -d '{"username": "admin", "password": "123456", "name": "관리자"}'
+  -d '{"username": "admin", "password": "change-this-password", "name": "관리자"}'
 ```
 
 성공 응답:
@@ -282,6 +286,7 @@ Vercel Dashboard > Project > Settings > Environment Variables에서 다음 환�
 | `NEXT_PUBLIC_SUPABASE_URL` | Production, Preview, Development |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Production, Preview, Development |
 | `SUPABASE_SERVICE_ROLE_KEY` | Production, Preview, Development |
+| `SETUP_SECRET` | Production, Preview, Development |
 | `KAKAO_REST_API_KEY` | Production, Preview, Development |
 | `NEXT_PUBLIC_APP_URL` | Production (실제 도메인 URL) |
 
@@ -306,9 +311,12 @@ curl https://your-app.vercel.app/api/health
 
 ```bash
 curl -X POST https://your-app.vercel.app/api/setup \
+  -H "Authorization: Bearer $SETUP_SECRET" \
   -H "Content-Type: application/json" \
   -d '{"username": "admin", "password": "your-password", "name": "관리자"}'
 ```
+
+최초 관리자 생성이 끝나면 `SETUP_SECRET`을 삭제하거나 새 값으로 교체하세요.
 
 ---
 

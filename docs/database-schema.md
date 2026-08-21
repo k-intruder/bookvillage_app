@@ -1,6 +1,6 @@
 # 데이터베이스 스키마 설계 문서 (Book Village)
 
-Supabase (PostgreSQL) 기반 데이터베이스 상세 설계. 마이그레이션 00001~00014 적용 기준.
+Supabase (PostgreSQL) 기반 데이터베이스 상세 설계. `supabase/migrations`의 마이그레이션을 순서대로 적용하는 것을 기준으로 한다.
 
 ## 테이블 관계도
 

@@ -3,6 +3,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { supabaseAdmin } from '@/lib/supabase/admin'
 import { getCurrentUser } from '@/app/actions/auth'
+import { isApprovedAdmin } from '@/lib/authorization'
 import { getKSTDateString } from '@/lib/date'
 
 interface DashboardStats {
@@ -35,7 +36,7 @@ export async function getDashboardStats(
   endDate: string
 ): Promise<DashboardStats | null> {
   const user = await getCurrentUser()
-  if (!user || user.role !== 'admin') return null
+  if (!isApprovedAdmin(user)) return null
 
   const supabase = await createClient()
   const today = getKSTDateString()
@@ -164,7 +165,7 @@ export async function getDashboardStats(
 
 export async function getOverdueList() {
   const user = await getCurrentUser()
-  if (!user || user.role !== 'admin') return []
+  if (!isApprovedAdmin(user)) return []
 
   const supabase = await createClient()
 

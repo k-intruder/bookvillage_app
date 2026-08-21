@@ -1,5 +1,6 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
+import { isApprovedAdmin } from '@/lib/authorization'
 
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request })
@@ -55,11 +56,11 @@ export async function updateSession(request: NextRequest) {
     if (user) {
       const { data: profile } = await supabase
         .from('profiles')
-        .select('role')
+        .select('role, admin_status')
         .eq('id', user.id)
         .single()
 
-      if (profile?.role === 'admin') {
+      if (isApprovedAdmin(profile)) {
         const url = request.nextUrl.clone()
         url.pathname = '/admin'
         return NextResponse.redirect(url)
@@ -78,11 +79,11 @@ export async function updateSession(request: NextRequest) {
 
     const { data: profile } = await supabase
       .from('profiles')
-      .select('role')
+      .select('role, admin_status')
       .eq('id', user.id)
       .single()
 
-    if (profile?.role !== 'admin') {
+    if (!isApprovedAdmin(profile)) {
       const url = request.nextUrl.clone()
       url.pathname = '/admin/login'
       return NextResponse.redirect(url)

@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/server'
 import { supabaseAdmin } from '@/lib/supabase/admin'
 import { createBookSchema, updateBookSchema } from '@/lib/validations/books'
 import { getCurrentUser } from '@/app/actions/auth'
+import { isApprovedAdmin } from '@/lib/authorization'
 import type { ActionResult } from '@/types'
 import type { Book } from '@/types'
 
@@ -132,7 +133,7 @@ export async function checkBarcodeExists(barcode: string): Promise<{ exists: boo
 
 export async function createBook(formData: FormData): Promise<ActionResult<Book>> {
   const user = await getCurrentUser()
-  if (!user || user.role !== 'admin') {
+  if (!isApprovedAdmin(user)) {
     return { success: false, error: '권한이 없습니다.' }
   }
 
@@ -202,7 +203,7 @@ export async function createBook(formData: FormData): Promise<ActionResult<Book>
 
 export async function updateBook(bookId: string, formData: FormData): Promise<ActionResult<Book>> {
   const user = await getCurrentUser()
-  if (!user || user.role !== 'admin') {
+  if (!isApprovedAdmin(user)) {
     return { success: false, error: '권한이 없습니다.' }
   }
 
@@ -243,7 +244,7 @@ export async function generateBarcodes(
   count: number
 ): Promise<ActionResult<{ codes: string[] }>> {
   const user = await getCurrentUser()
-  if (!user || user.role !== 'admin') {
+  if (!isApprovedAdmin(user)) {
     return { success: false, error: '권한이 없습니다.' }
   }
 
@@ -283,7 +284,7 @@ export async function updateBooksLocation(
   locationDetail: string
 ): Promise<ActionResult<{ count: number }>> {
   const user = await getCurrentUser()
-  if (!user || user.role !== 'admin') {
+  if (!isApprovedAdmin(user)) {
     return { success: false, error: '권한이 없습니다.' }
   }
 
@@ -349,7 +350,7 @@ export async function getBookRentalCount(bookId: string): Promise<{ total: numbe
 
 export async function deleteBook(bookId: string): Promise<ActionResult> {
   const user = await getCurrentUser()
-  if (!user || user.role !== 'admin') {
+  if (!isApprovedAdmin(user)) {
     return { success: false, error: '권한이 없습니다.' }
   }
 
@@ -425,7 +426,7 @@ export async function getNewBooks(limit = 20) {
 // 수동 신작 지정 (featured_until 설정)
 export async function setBookFeatured(bookId: string): Promise<ActionResult> {
   const user = await getCurrentUser()
-  if (!user || user.role !== 'admin') return { success: false, error: '권한이 없습니다.' }
+  if (!isApprovedAdmin(user)) return { success: false, error: '권한이 없습니다.' }
 
   const { data: setting } = await supabaseAdmin
     .from('library_settings')
@@ -450,7 +451,7 @@ export async function setBookFeatured(bookId: string): Promise<ActionResult> {
 // 수동 신작 해제
 export async function unsetBookFeatured(bookId: string): Promise<ActionResult> {
   const user = await getCurrentUser()
-  if (!user || user.role !== 'admin') return { success: false, error: '권한이 없습니다.' }
+  if (!isApprovedAdmin(user)) return { success: false, error: '권한이 없습니다.' }
 
   const { error } = await supabaseAdmin
     .from('books')

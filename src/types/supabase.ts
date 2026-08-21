@@ -683,7 +683,19 @@ export type Database = {
         Relationships: []
       }
     }
-    Functions: {}
+    Functions: {
+      change_jelly_balance: {
+        Args: {
+          p_user_id: string
+          p_amount: number
+          p_reason: string
+          p_description?: string | null
+          p_book_id?: string | null
+          p_allow_partial_deduction?: boolean
+        }
+        Returns: number
+      }
+    }
     Enums: {}
   }
 }

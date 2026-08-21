@@ -3,6 +3,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { supabaseAdmin } from '@/lib/supabase/admin'
 import { getCurrentUser } from './auth'
+import { isApprovedAdmin } from '@/lib/authorization'
 import type { ActionResult } from '@/types'
 
 export interface Notice {
@@ -29,7 +30,7 @@ export async function getNotices(): Promise<Notice[]> {
 // 관리자용: 전체 목록 (미발행 포함)
 export async function getAllNotices(): Promise<Notice[]> {
   const user = await getCurrentUser()
-  if (!user || user.role !== 'admin') return []
+  if (!isApprovedAdmin(user)) return []
   const { data } = await supabaseAdmin
     .from('notices')
     .select('id, title, content, image_url, is_published, created_at, updated_at')
@@ -49,7 +50,7 @@ export async function getNoticeById(id: string): Promise<Notice | null> {
 
 export async function createNotice(formData: FormData): Promise<ActionResult> {
   const user = await getCurrentUser()
-  if (!user || user.role !== 'admin') return { success: false, error: '권한이 없습니다.' }
+  if (!isApprovedAdmin(user)) return { success: false, error: '권한이 없습니다.' }
 
   const title = String(formData.get('title') ?? '').trim()
   const content = String(formData.get('content') ?? '').trim()
@@ -68,7 +69,7 @@ export async function createNotice(formData: FormData): Promise<ActionResult> {
 
 export async function updateNotice(id: string, formData: FormData): Promise<ActionResult> {
   const user = await getCurrentUser()
-  if (!user || user.role !== 'admin') return { success: false, error: '권한이 없습니다.' }
+  if (!isApprovedAdmin(user)) return { success: false, error: '권한이 없습니다.' }
 
   const title = String(formData.get('title') ?? '').trim()
   const content = String(formData.get('content') ?? '').trim()
@@ -85,7 +86,7 @@ export async function updateNotice(id: string, formData: FormData): Promise<Acti
 
 export async function deleteNotice(id: string): Promise<ActionResult> {
   const user = await getCurrentUser()
-  if (!user || user.role !== 'admin') return { success: false, error: '권한이 없습니다.' }
+  if (!isApprovedAdmin(user)) return { success: false, error: '권한이 없습니다.' }
   const { error } = await supabaseAdmin.from('notices').delete().eq('id', id)
   if (error) return { success: false, error: '공지 삭제에 실패했습니다.' }
   return { success: true }

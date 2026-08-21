@@ -169,6 +169,7 @@ vercel link
 | `NEXT_PUBLIC_SUPABASE_URL` | Supabase 프로젝트 URL | `https://xxx.supabase.co` | O |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase Anonymous Key (공개) | `eyJhbGciOi...` | O |
 | `SUPABASE_SERVICE_ROLE_KEY` | Supabase Service Role Key (서버 전용) | `eyJhbGciOi...` | O |
+| `SETUP_SECRET` | 최초 관리자 생성 API 인증 토큰 | 충분히 긴 무작위 문자열 | O |
 | `SUPABASE_DB_URL` | Supabase Direct DB 연결 URL | `postgresql://...` | X |
 | `KAKAO_REST_API_KEY` | 카카오 도서 검색 API 키 | `abcdef1234567890` | O |
 | `SOLAPI_API_KEY` | 솔라피 API Key (알림톡 발송) | `NCSXYZ...` | O |
@@ -191,6 +192,7 @@ vercel link
 NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
 SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
+SETUP_SECRET=long-random-one-time-setup-secret
 
 # Kakao API
 KAKAO_REST_API_KEY=your-kakao-rest-api-key

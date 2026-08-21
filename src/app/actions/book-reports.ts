@@ -3,7 +3,8 @@
 import { createClient } from '@/lib/supabase/server'
 import { supabaseAdmin } from '@/lib/supabase/admin'
 import { getCurrentUser } from '@/app/actions/auth'
-import { awardJellyForReport } from '@/app/actions/jelly'
+import { awardJellyForReport } from '@/lib/jelly'
+import { isApprovedAdmin } from '@/lib/authorization'
 import type { ActionResult, BookReport } from '@/types'
 import { z } from 'zod'
 
@@ -14,7 +15,7 @@ export async function getAllBookReports(params?: {
   pageSize?: number
 }) {
   const user = await getCurrentUser()
-  if (!user || user.role !== 'admin') return { rows: [], totalCount: 0, page: 1, totalPages: 0 }
+  if (!isApprovedAdmin(user)) return { rows: [], totalCount: 0, page: 1, totalPages: 0 }
 
   const page = params?.page ?? 1
   const pageSize = params?.pageSize ?? 20

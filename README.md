@@ -159,6 +159,7 @@ NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
 SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
 KAKAO_REST_API_KEY=your_kakao_rest_api_key
+SETUP_SECRET=long_random_one_time_setup_secret
 ```
 
 ### 데이터베이스

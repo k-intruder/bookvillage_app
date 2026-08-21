@@ -2,7 +2,8 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { getCurrentUser } from '@/app/actions/auth'
-import { awardJellyForQuiz } from '@/app/actions/jelly'
+import { awardJellyForQuiz } from '@/lib/jelly'
+import { isApprovedAdmin } from '@/lib/authorization'
 import type { ActionResult, Quiz } from '@/types'
 import { z } from 'zod'
 
@@ -51,7 +52,7 @@ export async function getQuizzesByBook(bookId: string) {
 
 export async function createQuiz(formData: FormData): Promise<ActionResult<Quiz>> {
   const user = await getCurrentUser()
-  if (!user || user.role !== 'admin') {
+  if (!isApprovedAdmin(user)) {
     return { success: false, error: '권한이 없습니다.' }
   }
 
