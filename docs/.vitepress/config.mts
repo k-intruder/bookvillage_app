@@ -56,6 +56,7 @@ export default defineConfig({
             { text: '관리자 가이드', link: '/guide/admin' },
             { text: '주민 가이드', link: '/guide/resident' },
             { text: '설치 & 배포', link: '/guide/deploy' },
+            { text: '포크 버전 실전 배포', link: '/guide/deploy-fork' },
           ],
         },
       ],

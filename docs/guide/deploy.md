@@ -198,7 +198,7 @@ curl -X POST http://localhost:6100/api/setup \
 }
 ```
 
-이제 `/admin/login`에서 `admin` / `123456`으로 로그인할 수 있습니다.
+이제 `/admin/login`에서 위 요청에 입력한 아이디와 비밀번호로 로그인할 수 있습니다.
 
 ### 방법 2: 웹 UI + DB 직접 수정
 
