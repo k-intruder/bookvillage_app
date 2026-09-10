@@ -237,8 +237,43 @@ export async function updateBook(bookId: string, formData: FormData): Promise<Ac
   return { success: true, data }
 }
 
-const SELF_BARCODE_PREFIX = 'BV'
+const DEFAULT_SELF_BARCODE_PREFIX = 'BV'
 const SELF_BARCODE_PAD = 6
+
+function normalizeBarcodePrefix(value?: string | null) {
+  const prefix = value?.trim().toUpperCase() ?? ''
+  return /^[A-Z0-9]{2,6}$/.test(prefix) ? prefix : DEFAULT_SELF_BARCODE_PREFIX
+}
+
+export async function getBarcodePrefix() {
+  const { data } = await supabaseAdmin
+    .from('library_settings')
+    .select('value')
+    .eq('key', 'barcode_prefix')
+    .maybeSingle()
+
+  return normalizeBarcodePrefix(data?.value)
+}
+
+export async function updateBarcodePrefix(prefix: string): Promise<ActionResult<{ prefix: string }>> {
+  const user = await getCurrentUser()
+  if (!isApprovedAdmin(user)) {
+    return { success: false, error: '권한이 없습니다.' }
+  }
+
+  const normalized = prefix.trim().toUpperCase()
+  if (!/^[A-Z0-9]{2,6}$/.test(normalized)) {
+    return { success: false, error: '접두사는 영문 대문자와 숫자 2~6자로 입력해주세요.' }
+  }
+
+  const { error } = await supabaseAdmin.from('library_settings').upsert(
+    { key: 'barcode_prefix', value: normalized, description: '자체 바코드 접두사', updated_at: new Date().toISOString() },
+    { onConflict: 'key' }
+  )
+
+  if (error) return { success: false, error: '접두사 저장에 실패했습니다.' }
+  return { success: true, data: { prefix: normalized } }
+}
 
 export async function generateBarcodes(
   count: number
@@ -250,17 +285,18 @@ export async function generateBarcodes(
 
   const n = Math.min(Math.max(Math.floor(count) || 0, 1), 1000)
   const supabase = await createClient()
+  const prefix = await getBarcodePrefix()
 
-  // 기존 자체 바코드(BV...) 중 최대 일련번호 조회 (소프트삭제 포함 — 충돌 방지)
+  // 현재 접두사의 최대 일련번호 조회 (소프트삭제 포함 — 충돌 방지)
   const { data } = await supabase
     .from('books')
     .select('barcode')
-    .like('barcode', `${SELF_BARCODE_PREFIX}%`)
+    .like('barcode', `${prefix}%`)
 
   let maxNum = 0
   for (const row of data ?? []) {
     const m = String(row.barcode).match(
-      new RegExp(`^${SELF_BARCODE_PREFIX}(\\d+)$`)
+      new RegExp(`^${prefix}(\\d+)$`)
     )
     if (m) {
       const num = parseInt(m[1], 10)
@@ -271,7 +307,7 @@ export async function generateBarcodes(
   const codes: string[] = []
   for (let i = 1; i <= n; i++) {
     codes.push(
-      `${SELF_BARCODE_PREFIX}${String(maxNum + i).padStart(SELF_BARCODE_PAD, '0')}`
+      `${prefix}${String(maxNum + i).padStart(SELF_BARCODE_PAD, '0')}`
     )
   }
 

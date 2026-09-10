@@ -5,8 +5,8 @@ import JsBarcode from "jsbarcode";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Barcode as BarcodeIcon, Printer, Plus, Trash2, Wand2, Loader2 } from "lucide-react";
-import { generateBarcodes } from "@/app/actions/books";
+import { Barcode as BarcodeIcon, Printer, Plus, Trash2, Wand2, Loader2, Save } from "lucide-react";
+import { generateBarcodes, getBarcodePrefix, updateBarcodePrefix } from "@/app/actions/books";
 
 function BarcodeSvg({ value }: { value: string }) {
   const ref = useRef<SVGSVGElement>(null);
@@ -30,10 +30,28 @@ function BarcodeSvg({ value }: { value: string }) {
 
 export default function BarcodesPage() {
   const [count, setCount] = useState("12");
+  const [prefix, setPrefix] = useState("BV");
   const [manual, setManual] = useState("");
   const [codes, setCodes] = useState<string[]>([]);
   const [error, setError] = useState("");
   const [isGenerating, startGenerate] = useTransition();
+  const [isSavingPrefix, startSavePrefix] = useTransition();
+
+  useEffect(() => {
+    getBarcodePrefix().then(setPrefix);
+  }, []);
+
+  function savePrefix() {
+    setError("");
+    startSavePrefix(async () => {
+      const result = await updateBarcodePrefix(prefix);
+      if (result.success && result.data) {
+        setPrefix(result.data.prefix);
+      } else {
+        setError(result.error ?? "접두사 저장에 실패했습니다.");
+      }
+    });
+  }
 
   function generateAuto() {
     setError("");
@@ -87,8 +105,24 @@ export default function BarcodesPage() {
         <CardContent className="space-y-4">
           <p className="text-sm text-muted-foreground">
             기존에 등록된 자체 바코드와 겹치지 않는 새 번호를 자동으로 만들어 줍니다.
-            (형식: BV000001)
+            (형식: {prefix || "BV"}000001)
           </p>
+          <div className="flex items-end gap-3">
+            <div className="space-y-1.5 w-40">
+              <label className="text-sm font-medium">바코드 접두사</label>
+              <Input
+                value={prefix}
+                maxLength={6}
+                onChange={(e) => setPrefix(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ""))}
+                placeholder="BV"
+              />
+            </div>
+            <Button variant="outline" onClick={savePrefix} disabled={isSavingPrefix || prefix.length < 2}>
+              {isSavingPrefix ? <Loader2 className="size-4 mr-1 animate-spin" /> : <Save className="size-4 mr-1" />}
+              접두사 저장
+            </Button>
+          </div>
+          <p className="text-xs text-muted-foreground">영문 대문자와 숫자 2~6자. 기존 바코드는 변경되지 않습니다.</p>
           <div className="flex items-end gap-3">
             <div className="space-y-1.5 w-40">
               <label className="text-sm font-medium">수량 (최대 1000)</label>

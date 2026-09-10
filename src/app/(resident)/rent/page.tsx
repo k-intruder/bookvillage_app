@@ -32,6 +32,7 @@ import { getPublicSettings } from "@/app/actions/settings";
 import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { DEFAULT_BRANDING } from "@/lib/branding";
+import { isIsbnBarcode } from "@/lib/utils";
 
 type PopularSearch = { query: string; count: number };
 
@@ -659,7 +660,7 @@ export default function RentPage() {
               <p className="text-center text-[clamp(1rem,2.5vw,1.3rem)] text-muted-foreground py-8">{searchError}</p>
             )}
             {searchResults.map((b) => {
-              const isSelf = b.barcode?.toUpperCase().startsWith("BV");
+              const isSelf = !isIsbnBarcode(b.barcode);
               return (
                 <button
                   key={b.id}
@@ -701,12 +702,12 @@ export default function RentPage() {
               </div>
               <p className="text-[clamp(1rem,2.4vw,1.25rem)] text-muted-foreground leading-relaxed">
                 대여하려는 실제 책의 바코드가 아래와 일치하는지 <b className="text-foreground">반드시 확인</b>하세요.
-                책에 붙은 바코드가 <b className="text-foreground">자체 바코드(BV)</b>인지 <b className="text-foreground">ISBN</b>인지 다를 수 있습니다.
+                책에 붙은 바코드가 <b className="text-foreground">자체 바코드</b>인지 <b className="text-foreground">ISBN</b>인지 다를 수 있습니다.
               </p>
               <div className="rounded-xl border bg-muted/30 p-4 space-y-1">
                 <p className="text-[clamp(1.05rem,2.6vw,1.4rem)] font-semibold">{dupConfirm.title}</p>
                 <p className="text-[clamp(1rem,2.3vw,1.25rem)] font-mono">
-                  {dupConfirm.barcode?.toUpperCase().startsWith("BV")
+                  {!isIsbnBarcode(dupConfirm.barcode)
                     ? `자체 바코드: ${dupConfirm.barcode}`
                     : `ISBN: ${dupConfirm.barcode}`}
                 </p>

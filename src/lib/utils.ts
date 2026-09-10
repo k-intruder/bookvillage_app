@@ -5,6 +5,10 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
+export function isIsbnBarcode(value: string): boolean {
+  return /^(?:\d{10}|\d{13})$/.test(value.trim())
+}
+
 // 두벌식 한글 자모 → 대응 영문 키 매핑
 // (바코드 리더기가 한글 IME 상태에서 입력하면 BV → ㅠㅍ 처럼 자모로 찍히는 문제 복원용)
 const HANGUL_TO_QWERTY: Record<string, string> = {

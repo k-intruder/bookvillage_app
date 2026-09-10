@@ -141,7 +141,7 @@ export async function POST(request: Request) {
   const { data: existingSettings } = await supabaseAdmin
     .from('library_settings')
     .select('key')
-    .in('key', ['max_rentals', 'rental_days', 'apartment_name', 'logo_url', 'site_type', 'color_theme'])
+    .in('key', ['max_rentals', 'rental_days', 'apartment_name', 'logo_url', 'site_type', 'color_theme', 'barcode_prefix'])
 
   const existingKeys = new Set((existingSettings ?? []).map((s: { key: string }) => s.key))
   const defaultSettings = [
@@ -151,6 +151,7 @@ export async function POST(request: Request) {
     { key: 'logo_url', value: DEFAULT_BRANDING.logoUrl, description: '도서관 로고 URL' },
     { key: 'site_type', value: 'apartment', description: '사이트 유형 (apartment/school/village)' },
     { key: 'color_theme', value: DEFAULT_BRANDING.themeId, description: '컬러 테마' },
+    { key: 'barcode_prefix', value: 'BV', description: '자체 바코드 접두사' },
   ].filter((s) => !existingKeys.has(s.key))
 
   if (defaultSettings.length > 0) {

@@ -23,6 +23,7 @@ import {
 } from "lucide-react";
 import { checkoutBookGuest } from "@/app/actions/rentals";
 import { getBooks } from "@/app/actions/books";
+import { isIsbnBarcode } from "@/lib/utils";
 
 type BookHit = { id: string; title: string; author: string; barcode: string; is_available: boolean; cover_image: string | null };
 
@@ -293,7 +294,7 @@ export default function GuestCheckoutPage() {
           {bookResults.length > 0 && (
             <div className="space-y-2">
               {bookResults.map((b) => {
-                const isSelf = b.barcode?.toUpperCase().startsWith("BV");
+                const isSelf = !isIsbnBarcode(b.barcode);
                 const selected = inCart(b.id);
                 return (
                   <div key={b.id} className="flex items-center gap-3 border rounded-lg p-3">
