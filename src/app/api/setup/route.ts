@@ -39,6 +39,22 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: '권한이 없습니다.' }, { status: 401 })
   }
 
+  // Vercel에서 request body stream을 나중에 읽을 경우 소실되는
+  // 케이스를 피하기 위해 외부 I/O보다 먼저 문자열로 복사한다.
+  const rawBody = (await request.text()).replace(/^\uFEFF/, '')
+  let body: { username?: string; password?: string; name?: string }
+  try {
+    body = JSON.parse(rawBody)
+  } catch {
+    return NextResponse.json(
+      {
+        error: '요청 본문이 올바르지 않습니다.',
+        receivedBytes: Buffer.byteLength(rawBody, 'utf8'),
+      },
+      { status: 400 }
+    )
+  }
+
   const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey, {
     auth: { autoRefreshToken: false, persistSession: false },
   })
@@ -55,16 +71,6 @@ export async function POST(request: Request) {
     return NextResponse.json(
       { error: '이미 관리자가 존재합니다. 초기 설정은 1회만 가능합니다.' },
       { status: 409 }
-    )
-  }
-
-  let body: { username?: string; password?: string; name?: string }
-  try {
-    body = await request.json()
-  } catch {
-    return NextResponse.json(
-      { error: '요청 본문이 올바르지 않습니다.' },
-      { status: 400 }
     )
   }
 
