@@ -3,6 +3,7 @@ import { Geist_Mono } from "next/font/google";
 import localFont from "next/font/local";
 import { getPublicSettings } from "@/app/actions/settings";
 import { getThemeById } from "@/lib/themes";
+import { DEFAULT_BRANDING } from "@/lib/branding";
 import "./globals.css";
 
 const pretendard = localFont({
@@ -20,10 +21,10 @@ const geistMono = Geist_Mono({
 export async function generateMetadata(): Promise<Metadata> {
   const settings = await getPublicSettings();
 
-  const apartmentName = settings.apartment_name;
-  const title = settings.og_title || apartmentName || "작은도서관";
-  const description = settings.og_description || "스마트 작은도서관 관리 및 독서 커뮤니티";
-  const ogImage = settings.og_image_url || settings.logo_url;
+  const apartmentName = settings.apartment_name || DEFAULT_BRANDING.apartmentName;
+  const title = settings.og_title || `${apartmentName} 작은도서관`;
+  const description = settings.og_description || DEFAULT_BRANDING.description;
+  const ogImage = settings.og_image_url || settings.logo_url || DEFAULT_BRANDING.logoUrl;
   const appUrl = process.env.NEXT_PUBLIC_APP_URL;
 
   return {
@@ -34,10 +35,10 @@ export async function generateMetadata(): Promise<Metadata> {
     },
     description,
     // 홈 화면 추가 시 앱 이름/아이콘
-    applicationName: "자람도서관",
+    applicationName: DEFAULT_BRANDING.libraryName,
     appleWebApp: {
       capable: true,
-      title: "자람도서관",
+      title: DEFAULT_BRANDING.libraryName,
       statusBarStyle: "default",
     },
     icons: {
@@ -65,7 +66,8 @@ export default async function RootLayout({
   children: React.ReactNode;
 }>) {
   const settings = await getPublicSettings();
-  const theme = getThemeById(settings.color_theme || "yellow");
+  const themeId = settings.color_theme || DEFAULT_BRANDING.themeId;
+  const theme = getThemeById(themeId);
   const lightVars = theme && theme.id !== "yellow" ? theme.light : {};
   const darkVars = theme && theme.id !== "yellow" ? theme.dark : {};
   const styleString =
@@ -85,7 +87,7 @@ export default async function RootLayout({
     <html
       lang="ko"
       className={`${pretendard.variable} ${geistMono.variable} h-full antialiased`}
-      data-theme={settings.color_theme || "yellow"}
+      data-theme={themeId}
       style={styleString ? (Object.fromEntries(Object.entries(lightVars)) as React.CSSProperties) : undefined}
     >
       {darkStyleString && (

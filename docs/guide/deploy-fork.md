@@ -58,7 +58,7 @@ npx supabase link --project-ref "YOUR_PROJECT_REF"
 npx supabase db push
 ```
 
-확인 질문이 나오면 적용할 마이그레이션 목록을 검토한 후 승인합니다. `00001`부터 `00020`까지 순서대로 적용되어야 합니다.
+확인 질문이 나오면 적용할 마이그레이션 목록을 검토한 후 승인합니다. `00001`부터 `00021`까지 순서대로 적용되어야 합니다.
 
 ### 기존 운영 DB를 업그레이드하는 경우
 
@@ -218,6 +218,7 @@ GitHub Pull Request를 사용하는 경우 로컬 merge 명령은 생략합니�
 - Vercel Production 환경변수에 실제 운영값이 들어갔는가
 - `SUPABASE_SERVICE_ROLE_KEY`가 `NEXT_PUBLIC_` 변수로 등록되지 않았는가
 - `00020_security_and_integrity.sql`이 적용됐는가
+- `00021_asterium_branding.sql`이 적용됐는가
 - 최초 관리자 생성 후 `SETUP_SECRET`을 제거했는가
 - 관리자와 주민 계정으로 각각 핵심 흐름을 점검했는가
 - Supabase 백업 정책과 사용량 알림을 설정했는가

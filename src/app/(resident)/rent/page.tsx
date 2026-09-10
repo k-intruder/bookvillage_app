@@ -31,6 +31,7 @@ import { getPopularSearches } from "@/app/actions/recommendations";
 import { getPublicSettings } from "@/app/actions/settings";
 import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
+import { DEFAULT_BRANDING } from "@/lib/branding";
 
 type PopularSearch = { query: string; count: number };
 
@@ -337,23 +338,15 @@ export default function RentPage() {
       {/* 헤더 */}
       <header className="shrink-0 border-b bg-background px-[clamp(1rem,3vw,2rem)] py-[1.5vh]">
         <div className="flex items-center gap-[clamp(0.5rem,1.5vw,0.8rem)]">
-          {publicSettings?.logo_url ? (
-            <img
-              src={publicSettings.logo_url}
-              alt="로고"
-              className="size-[clamp(2rem,5vw,3rem)] rounded-lg object-contain shrink-0"
-            />
-          ) : (
-            <div className="size-[clamp(2rem,5vw,3rem)] rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-              <BookOpen className="size-[clamp(1.2rem,3vw,1.8rem)] text-primary" />
-            </div>
-          )}
+          <img
+            src={publicSettings?.logo_url || DEFAULT_BRANDING.logoUrl}
+            alt="아스테리움시그니처 로고"
+            className="h-[clamp(2rem,5vw,3rem)] w-[clamp(6rem,15vw,9rem)] object-contain object-left shrink-0"
+          />
           <div className="min-w-0">
-            {publicSettings?.apartment_name && (
-              <p className="text-[clamp(0.75rem,1.6vw,0.9rem)] text-muted-foreground font-medium leading-tight truncate">
-                {publicSettings.apartment_name}
-              </p>
-            )}
+            <p className="text-[clamp(0.75rem,1.6vw,0.9rem)] text-muted-foreground font-medium leading-tight truncate">
+              {publicSettings?.apartment_name || DEFAULT_BRANDING.apartmentName}
+            </p>
             <h1 className="text-[clamp(1.3rem,3.5vw,2rem)] font-bold leading-tight">대여하기</h1>
           </div>
         </div>

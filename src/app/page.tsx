@@ -1,10 +1,11 @@
 import Link from "next/link";
 import { getPublicSettings } from "@/app/actions/settings";
+import { DEFAULT_BRANDING } from "@/lib/branding";
 
 export default async function Home() {
   const settings = await getPublicSettings();
-  const name = settings.apartment_name || "작은도서관";
-  const logoUrl = settings.logo_url || "/logo.png";
+  const name = settings.apartment_name || DEFAULT_BRANDING.apartmentName;
+  const logoUrl = settings.logo_url || DEFAULT_BRANDING.logoUrl;
   const kakaoChannelId = settings.kakao_channel_id;
 
   return (
@@ -28,8 +29,9 @@ export default async function Home() {
             <img
               src={logoUrl}
               alt={name}
-              className="size-[clamp(8rem,32vw,13rem)] object-contain"
+              className="h-auto w-[min(92vw,28rem)] object-contain"
             />
+            <h1 className="sr-only">{name}</h1>
             <p className="text-center text-[clamp(1rem,2.8vw,1.3rem)] text-muted-foreground">
               우리 동네 작은도서관
             </p>

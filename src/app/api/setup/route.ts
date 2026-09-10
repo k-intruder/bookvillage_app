@@ -1,6 +1,7 @@
 import { createClient } from '@supabase/supabase-js'
 import { NextResponse } from 'next/server'
 import { timingSafeEqual } from 'node:crypto'
+import { DEFAULT_BRANDING } from '@/lib/branding'
 
 function hasValidSetupSecret(request: Request, expectedSecret: string) {
   const authorization = request.headers.get('authorization')
@@ -134,15 +135,16 @@ export async function POST(request: Request) {
   const { data: existingSettings } = await supabaseAdmin
     .from('library_settings')
     .select('key')
-    .in('key', ['max_rentals', 'rental_days', 'site_name', 'site_type', 'color_theme'])
+    .in('key', ['max_rentals', 'rental_days', 'apartment_name', 'logo_url', 'site_type', 'color_theme'])
 
   const existingKeys = new Set((existingSettings ?? []).map((s: { key: string }) => s.key))
   const defaultSettings = [
     { key: 'max_rentals', value: '5', description: '1인당 최대 대출 권수' },
     { key: 'rental_days', value: '14', description: '기본 대출 기간 (일)' },
-    { key: 'site_name', value: '우리 도서관', description: '도서관 이름' },
+    { key: 'apartment_name', value: DEFAULT_BRANDING.apartmentName, description: '아파트 이름' },
+    { key: 'logo_url', value: DEFAULT_BRANDING.logoUrl, description: '도서관 로고 URL' },
     { key: 'site_type', value: 'apartment', description: '사이트 유형 (apartment/school/village)' },
-    { key: 'color_theme', value: 'yellow', description: '컬러 테마' },
+    { key: 'color_theme', value: DEFAULT_BRANDING.themeId, description: '컬러 테마' },
   ].filter((s) => !existingKeys.has(s.key))
 
   if (defaultSettings.length > 0) {

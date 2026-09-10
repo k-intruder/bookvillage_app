@@ -9,6 +9,7 @@ import { signInByDongHo, signUp, checkPhoneExists } from "@/app/actions/auth";
 import { getPublicSettings } from "@/app/actions/settings";
 import { PrivacyTermsModal } from "@/components/privacy-terms-modal";
 import { Loader2, ChevronLeft, Check, ShieldCheck, BellRing, Gift, Lock } from "lucide-react";
+import { DEFAULT_BRANDING } from "@/lib/branding";
 
 const PIN_LENGTH = 4;
 
@@ -36,8 +37,8 @@ export default function LoginPage() {
   const [ho, setHo] = useState("");
 
   const [siteType, setSiteType] = useState<SiteType>("apartment");
-  const [apartmentName, setApartmentName] = useState("");
-  const [logoUrl, setLogoUrl] = useState("");
+  const [apartmentName, setApartmentName] = useState<string>(DEFAULT_BRANDING.apartmentName);
+  const [logoUrl, setLogoUrl] = useState<string>(DEFAULT_BRANDING.logoUrl);
   const [kakaoChannelId, setKakaoChannelId] = useState("");
   const [settingsLoaded, setSettingsLoaded] = useState(false);
   const [logoReady, setLogoReady] = useState(false);
@@ -407,9 +408,9 @@ export default function LoginPage() {
           ) : (
             <Link href="/" className={`flex flex-col items-center transition-opacity duration-500 active:opacity-70 ${logoReady ? "opacity-100" : "opacity-0"}`}>
               <img
-                src={logoUrl || "/logo.png"}
+                src={logoUrl}
                 alt={apartmentName || "도서관"}
-                className="max-h-20 object-contain"
+                className="max-h-20 w-[min(82vw,24rem)] object-contain"
                 onLoad={() => setLogoReady(true)}
                 onError={() => setLogoReady(true)}
               />
