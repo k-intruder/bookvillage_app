@@ -140,10 +140,11 @@ SUPABASE_ACCESS_TOKEN=<your-access-token> \
 | RLS 정책 | 모든 테이블에 Row Level Security 적용 |
 | Storage | book-covers 버킷 (public), images 버킷 (public) |
 
-### 5-5. handle_new_user 트리거 제거 (중요)
+### 5-5. handle_new_user 트리거 제거 확인
 
-새 Supabase 프로젝트에는 `handle_new_user` 트리거가 기본으로 존재할 수 있습니다.
-책빌리지는 코드에서 직접 프로필을 생성하므로 이 트리거를 **반드시 제거**해야 합니다.
+책빌리지는 코드에서 직접 프로필을 생성하므로 `00022_remove_legacy_profile_trigger.sql`이
+레거시 `handle_new_user` 트리거를 자동으로 제거합니다. 이전 마이그레이션만 적용한 환경에서는
+아래 명령으로 수동 제거할 수 있습니다.
 
 ```bash
 SUPABASE_ACCESS_TOKEN=<your-access-token> \
