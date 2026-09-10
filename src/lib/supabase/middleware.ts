@@ -3,6 +3,12 @@ import { NextResponse, type NextRequest } from 'next/server'
 import { isApprovedAdmin } from '@/lib/authorization'
 
 export async function updateSession(request: NextRequest) {
+  // setup API는 자체 Bearer 인증을 사용한다. POST body를 세션 갱신
+  // 응답으로 재구성하지 않고 원본 그대로 Route Handler에 전달한다.
+  if (request.nextUrl.pathname === '/api/setup') {
+    return NextResponse.next()
+  }
+
   let supabaseResponse = NextResponse.next({ request })
 
   const supabase = createServerClient(
