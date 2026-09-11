@@ -17,6 +17,7 @@ export type Database = {
           dong_ho: string
           role: 'resident' | 'admin'
           admin_status: 'pending' | 'approved' | null
+          membership_status: 'pending' | 'approved'
           is_guest: boolean
           notifications_read_at: string | null
           notices_read_at: string | null
@@ -30,6 +31,7 @@ export type Database = {
           dong_ho: string
           role?: 'resident' | 'admin'
           admin_status?: 'pending' | 'approved' | null
+          membership_status?: 'pending' | 'approved'
           is_guest?: boolean
           notifications_read_at?: string | null
           notices_read_at?: string | null
@@ -43,6 +45,7 @@ export type Database = {
           dong_ho?: string
           role?: 'resident' | 'admin'
           admin_status?: 'pending' | 'approved' | null
+          membership_status?: 'pending' | 'approved'
           is_guest?: boolean
           notifications_read_at?: string | null
           notices_read_at?: string | null

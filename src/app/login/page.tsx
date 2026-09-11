@@ -279,16 +279,8 @@ export default function LoginPage() {
     startTransition(async () => {
       const result = await signUp(formData);
       if (result.success) {
-        const loginData = new FormData();
-        loginData.set("dong_ho", dongHo);
-        loginData.set("pin", fullPin);
-        const loginResult = await signInByDongHo(loginData);
-        if (loginResult.success) {
-          router.push("/rent");
-        } else {
-          setError("가입 완료! 로그인해 주세요.");
-          resetToLogin();
-        }
+        setError("가입 신청이 완료됐습니다. 관리자 승인 후 로그인해주세요.");
+        resetToLogin();
       } else {
         setError(result.error ?? "회원가입에 실패했습니다.");
         setPin("");

@@ -55,11 +55,12 @@ import {
 import { getBooks, getBookDeletions } from "@/app/actions/books";
 import { createQuiz } from "@/app/actions/quizzes";
 import { getOverdueList } from "@/app/actions/stats";
-import { getPendingAdmins, approveAdmin, rejectAdmin } from "@/app/actions/auth";
+import { getPendingAdmins, approveAdmin, rejectAdmin, getPendingResidents, approveResident, rejectResident } from "@/app/actions/auth";
 
 type BookItem = { id: string; title: string; author: string; barcode: string };
 type OverdueItem = Awaited<ReturnType<typeof getOverdueList>>[number];
 type PendingAdmin = { id: string; name: string; created_at: string };
+type PendingResident = { id: string; name: string; dong_ho: string; phone_number: string; created_at: string };
 type DeletionItem = { id: string; book_title: string; book_barcode: string; book_author: string | null; deleted_at: string; profiles: { name: string } | null };
 
 const settingsMenu = [
@@ -91,6 +92,8 @@ export default function AdminManagePage() {
   // Admin approval state
   const [pendingAdmins, setPendingAdmins] = useState<PendingAdmin[]>([]);
   const [adminsLoaded, setAdminsLoaded] = useState(false);
+  const [pendingResidents, setPendingResidents] = useState<PendingResident[]>([]);
+  const [residentsLoaded, setResidentsLoaded] = useState(false);
 
   // Deletion log state
   const [deletions, setDeletions] = useState<DeletionItem[]>([]);
@@ -102,6 +105,8 @@ export default function AdminManagePage() {
   const [isLoadingOverdue, startLoadOverdue] = useTransition();
   const [isLoadingAdmins, startLoadAdmins] = useTransition();
   const [isProcessingAdmin, startProcessAdmin] = useTransition();
+  const [isLoadingResidents, startLoadResidents] = useTransition();
+  const [isProcessingResident, startProcessResident] = useTransition();
 
   const handleBookSearch = () => {
     if (!bookSearch.trim()) return;
@@ -186,6 +191,27 @@ export default function AdminManagePage() {
       if (result.success) {
         setPendingAdmins((prev) => prev.filter((a) => a.id !== adminId));
       }
+    });
+  };
+
+  const handleLoadResidents = () => {
+    startLoadResidents(async () => {
+      setPendingResidents(await getPendingResidents() as PendingResident[]);
+      setResidentsLoaded(true);
+    });
+  };
+
+  const handleApproveResident = (residentId: string) => {
+    startProcessResident(async () => {
+      const result = await approveResident(residentId);
+      if (result.success) setPendingResidents((prev) => prev.filter((r) => r.id !== residentId));
+    });
+  };
+
+  const handleRejectResident = (residentId: string) => {
+    startProcessResident(async () => {
+      const result = await rejectResident(residentId);
+      if (result.success) setPendingResidents((prev) => prev.filter((r) => r.id !== residentId));
     });
   };
 
@@ -362,6 +388,44 @@ export default function AdminManagePage() {
               )}
             </DialogContent>
           </Dialog>
+        </CardContent>
+      </Card>
+
+      {/* 주민 승인 관리 */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-base">
+            <UserCheck className="size-4" />
+            주민 가입 승인
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-sm text-muted-foreground mb-4">일반 사용자의 가입 신청을 확인하고 승인하거나 거절합니다.</p>
+          {!residentsLoaded ? (
+            <Button variant="outline" className="w-full" onClick={handleLoadResidents} disabled={isLoadingResidents}>
+              {isLoadingResidents ? <Loader2 className="size-4 mr-2 animate-spin" /> : <UserCheck className="size-4 mr-2" />}
+              승인 대기 주민 보기
+            </Button>
+          ) : pendingResidents.length === 0 ? (
+            <p className="text-sm text-muted-foreground text-center py-4">승인 대기 중인 주민이 없습니다.</p>
+          ) : (
+            <div className="space-y-2">
+              {pendingResidents.map((resident) => (
+                <div key={resident.id} className="flex flex-wrap items-center gap-3 rounded-lg border p-3">
+                  <div className="min-w-0 flex-1">
+                    <p className="font-medium">{resident.name} <span className="text-sm text-muted-foreground">{resident.dong_ho}</span></p>
+                    <p className="text-xs text-muted-foreground">{resident.phone_number} · {new Date(resident.created_at).toLocaleDateString("ko-KR")}</p>
+                  </div>
+                  <Button size="sm" onClick={() => handleApproveResident(resident.id)} disabled={isProcessingResident}>
+                    <UserCheck className="size-3.5 mr-1" />승인
+                  </Button>
+                  <Button size="sm" variant="destructive" onClick={() => handleRejectResident(resident.id)} disabled={isProcessingResident}>
+                    <UserX className="size-3.5 mr-1" />거절
+                  </Button>
+                </div>
+              ))}
+            </div>
+          )}
         </CardContent>
       </Card>
 

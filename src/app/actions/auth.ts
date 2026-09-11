@@ -51,6 +51,7 @@ export async function signUp(formData: FormData): Promise<ActionResult> {
         phone_number,
         name,
         dong_ho,
+        membership_status: 'pending',
       })
 
     if (profileError) {
@@ -85,6 +86,19 @@ export async function signIn(formData: FormData): Promise<ActionResult> {
     return { success: false, error: '휴대폰 번호 또는 비밀번호가 올바르지 않습니다.' }
   }
 
+  const { data: { user } } = await supabase.auth.getUser()
+  if (user) {
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('role, membership_status')
+      .eq('id', user.id)
+      .single()
+    if (profile?.role === 'resident' && profile.membership_status !== 'approved') {
+      await supabase.auth.signOut()
+      return { success: false, error: '가입 승인 대기 중입니다. 관리자 승인 후 로그인해주세요.' }
+    }
+  }
+
   return { success: true }
 }
 
@@ -102,7 +116,7 @@ export async function signInByDongHo(formData: FormData): Promise<ActionResult> 
   // 동/호수가 일치하는 주민 조회 (관리자 제외)
   const { data: profiles } = await supabaseAdmin
     .from('profiles')
-    .select('phone_number')
+    .select('phone_number, membership_status')
     .eq('dong_ho', dongHo)
     .eq('role', 'resident')
 
@@ -121,6 +135,10 @@ export async function signInByDongHo(formData: FormData): Promise<ActionResult> 
       password,
     })
     if (!error) {
+      if (profile.membership_status !== 'approved') {
+        await supabase.auth.signOut()
+        return { success: false, error: '가입 승인 대기 중입니다. 관리자 승인 후 로그인해주세요.' }
+      }
       return { success: true }
     }
   }
@@ -293,6 +311,42 @@ export async function rejectAdmin(adminId: string): Promise<ActionResult> {
   return { success: true }
 }
 
+export async function getPendingResidents() {
+  const user = await getCurrentUser()
+  if (!user || user.role !== 'admin' || user.admin_status !== 'approved') return []
+
+  const { data } = await supabaseAdmin
+    .from('profiles')
+    .select('id, name, dong_ho, phone_number, created_at')
+    .eq('role', 'resident')
+    .eq('membership_status', 'pending')
+    .order('created_at', { ascending: true })
+  return data ?? []
+}
+
+export async function approveResident(residentId: string): Promise<ActionResult> {
+  const user = await getCurrentUser()
+  if (!user || user.role !== 'admin' || user.admin_status !== 'approved') {
+    return { success: false, error: '권한이 없습니다.' }
+  }
+  const { error } = await supabaseAdmin
+    .from('profiles')
+    .update({ membership_status: 'approved' })
+    .eq('id', residentId)
+    .eq('role', 'resident')
+    .eq('membership_status', 'pending')
+  return error ? { success: false, error: '승인 처리에 실패했습니다.' } : { success: true }
+}
+
+export async function rejectResident(residentId: string): Promise<ActionResult> {
+  const user = await getCurrentUser()
+  if (!user || user.role !== 'admin' || user.admin_status !== 'approved') {
+    return { success: false, error: '권한이 없습니다.' }
+  }
+  const { error } = await supabaseAdmin.auth.admin.deleteUser(residentId)
+  return error ? { success: false, error: '계정 삭제에 실패했습니다.' } : { success: true }
+}
+
 // 관리자: 주민 PIN(비밀번호) 재설정
 export async function adminResetResidentPin(userId: string, newPin: string): Promise<ActionResult> {
   const user = await getCurrentUser()
@@ -354,5 +408,6 @@ export async function getCurrentUser() {
     .eq('id', user.id)
     .single()
 
+  if (profile?.role === 'resident' && profile.membership_status !== 'approved') return null
   return profile
 }
