@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Barcode as BarcodeIcon, Printer, Plus, Trash2, Wand2, Loader2, Save } from "lucide-react";
 import { generateBarcodes, getBarcodePrefix, updateBarcodePrefix } from "@/app/actions/books";
+import { getPublicSettings } from "@/app/actions/settings";
 
 function BarcodeSvg({ value }: { value: string }) {
   const ref = useRef<SVGSVGElement>(null);
@@ -31,6 +32,7 @@ function BarcodeSvg({ value }: { value: string }) {
 export default function BarcodesPage() {
   const [count, setCount] = useState("12");
   const [prefix, setPrefix] = useState("BV");
+  const [logoUrl, setLogoUrl] = useState("/asterium-signature-logo.png");
   const [manual, setManual] = useState("");
   const [codes, setCodes] = useState<string[]>([]);
   const [error, setError] = useState("");
@@ -39,6 +41,9 @@ export default function BarcodesPage() {
 
   useEffect(() => {
     getBarcodePrefix().then(setPrefix);
+    getPublicSettings().then((settings) => {
+      if (settings.logo_url) setLogoUrl(settings.logo_url);
+    });
   }, []);
 
   function savePrefix() {
@@ -186,7 +191,7 @@ export default function BarcodesPage() {
                 className="barcode-label flex flex-col items-center justify-center gap-2 rounded-lg border bg-white p-3"
                 style={{ minHeight: "180px" }}
               >
-                <img src="/logo.png" alt="" className="h-12 object-contain" />
+                <img src={logoUrl} alt="아파트 로고" className="h-12 max-w-full object-contain" />
                 <BarcodeSvg value={code} />
               </div>
             ))}
